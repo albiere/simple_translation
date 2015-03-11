@@ -12,7 +12,7 @@ module SimpleTranslation
     end
 
     def translate
-      response = Faraday.post(TRANSLATE_URL, translate_params(request_token))
+      response = TranslationRequest.post(TRANSLATE_URL, translate_params(request_token))
       raise TranslateRequestError unless response.status == 200
 
       document = Nokogiri::XML(response.body)
@@ -22,7 +22,7 @@ module SimpleTranslation
     end
 
     def request_token
-      response = Faraday.post(CREDENTIAL_URL, credential_params)
+      response = TranslationRequest.post(CREDENTIAL_URL, credential_params)
       raise InvalidCredentialError unless response.status == 200
 
       json = JSON.parse(response.body, symbolize_names: true)

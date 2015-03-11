@@ -1,16 +1,23 @@
 require 'minitest_helper'
 
 class BingTest < Minitest::Test
-  include SimpleTranslation
+  include SimpleTranslation::Test::Fixtures
 
-  def setup
-    @params = { 
-      client_id: 'id', 
-      client_secret: 'secret',
-      from: 'pt', 
-      to: 'en', 
-      text: 'bola'
-    }
+  def setup    
+    credential_response = load_fixture('credential_response.json')
+    translate_response = load_fixture('translate_response.xml')
+
+    @credential_success = Struct.new(:body, :status).new(credential_response, 200)
+    @credential_error = Struct.new(:body, :status).new(credential_response, 400)
+    
+    @translate_success = Struct.new(:body, :status).new(translate_response, 200)
+    @translate_error = Struct.new(:body, :status).new(translate_response, 400)
+
+    @params = { client_id: 'id', 
+                client_secret: 'secret',
+                from: 'pt', 
+                to: 'en', 
+                text: 'bola' }
   end
 
   def test_request_credentials
@@ -21,27 +28,22 @@ class BingTest < Minitest::Test
       'grant_type' => 'client_credentials',
       'scope' => 'http://api.microsofttranslator.com'
     }
-    faraday_response = Struct.new(:body, :status).new("{\"token_type\":\"token_type\",\"access_token\":\"access_token\",\"expires_in\":\"599\",\"scope\":\"scope\"}", 200)
-  
-    Faraday.expects(:post).with(url, post_params).returns(faraday_response)
+    
+    TranslationRequest.expects(:post).with(url, post_params).returns(@credential_success)
     Bing.new(@params).request_token
   end
 
   def test_process_request_credentials_success
-   faraday_response = Struct.new(:body, :status).new("{\"token_type\":\"token_type\",\"access_token\":\"access_token\",\"expires_in\":\"599\",\"scope\":\"scope\"}", 200)
-
-   Faraday.stubs(:post).returns(faraday_response)
-   assert_equal 'access_token', Bing.new(@params).request_token
+    TranslationRequest.stubs(:post).returns(@credential_success)
+    assert_equal 'access_token', Bing.new(@params).request_token
   end
 
   def test_process_request_credentials_error
-   faraday_response = Struct.new(:body, :status).new("{\"token_type\":\"token_type\",\"access_token\":\"access_token\",\"expires_in\":\"599\",\"scope\":\"scope\"}", 400)
+    TranslationRequest.stubs(:post).returns(@credential_error)
 
-   Faraday.stubs(:post).returns(faraday_response)
-
-   assert_raises(InvalidCredentialError) do
+    assert_raises(InvalidCredentialError) do
      Bing.new(@params).request_token
-   end
+    end
   end
 
   def test_request_translate
@@ -54,33 +56,30 @@ class BingTest < Minitest::Test
       'contentType' => 'text/plain',
       'authorization' => 'authorization'
     }
-    faraday_response = Struct.new(:body, :status).new('<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">translation</string>', 200)
     
     request = Bing.new(@params)
 
     request.stubs(:request_token).returns('authorization')
-    Faraday.expects(:post).with(url, post_params).returns(faraday_response)
+    TranslationRequest.expects(:post).with(url, post_params).returns(@translate_success)
 
     request.translate
   end
 
   def test_process_request_translate_success
-    faraday_response = Struct.new(:body, :status).new('<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">translation</string>', 200)
     request = Bing.new(@params)
 
     request.stubs(:request_token).returns('authorization')
-    Faraday.stubs(:post).returns(faraday_response)
+    TranslationRequest.stubs(:post).returns(@translate_success)
 
     assert_kind_of TranslationResponse, request.translate
     assert_equal 'translation', request.translate.text
   end
 
   def test_process_request_translate_error
-    faraday_response = Struct.new(:body, :status).new('<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">translation</string>', 400)
     request = Bing.new(@params)
 
     request.stubs(:request_token).returns('authorization')
-    Faraday.stubs(:post).returns(faraday_response)
+    TranslationRequest.stubs(:post).returns(@translate_error)
 
     assert_raises(TranslateRequestError) do
       request.translate
