@@ -11,34 +11,29 @@ module SimpleTranslation
       @options = options
     end
 
-    def translate
-      response = TranslationRequest.post(TRANSLATE_URL, translate_params(request_token))
-      raise TranslateRequestError unless response.status == 200
+    def translate(text, options)
+      options = @options.merge(options).merge({ text: text })
 
-      document = Nokogiri::XML(response.body)
-      text = document.css('string').text
-
-      TranslationResponse.new(text)
+      response = RequestHandler.post(TRANSLATE_URL, translate_params(options))
+      response = BingTranslationResponse.new(response)
+      response.create_response
     end
 
     def request_token
-      response = TranslationRequest.post(CREDENTIAL_URL, credential_params)
-      raise InvalidCredentialError unless response.status == 200
-
-      json = JSON.parse(response.body, symbolize_names: true)
-      json[:access_token]
+      response = RequestHandler.post(CREDENTIAL_URL, credential_params)
+      BingCredentialResponse.new(response).access_token
     end
 
     private
 
-    def translate_params(token)
+    def translate_params(options)
       {
         'appId' => '',
-        'from' => @options[:from],
-        'to' => @options[:to],
-        'text' => @options[:text],
+        'from' => options[:from],
+        'to' => options[:to],
+        'text' => options[:text],
         'contentType' => 'text/plain',
-        'authorization' => token
+        'authorization' => request_token
       }
     end
 
@@ -49,6 +44,43 @@ module SimpleTranslation
         'grant_type' => 'client_credentials',
         'scope' => 'http://api.microsofttranslator.com'
       }
+    end
+
+    protected
+
+    class BingTranslationResponse
+      
+      def initialize(response)
+        raise TranslateRequestError unless response.status == 200
+
+        @body = response.body
+        @status = response.status
+        @document = Nokogiri::XML(response.body)
+      end
+
+      def create_response
+        TranslationResponse.new(string_translated)
+      end
+      
+      private
+
+      def string_translated
+        @document.css('string').text
+      end
+
+    end
+
+    class BingCredentialResponse
+
+      def initialize(response)
+        raise InvalidCredentialError unless response.status == 200
+        @json = JSON.parse(response.body, symbolize_names: true)
+      end
+
+      def access_token
+        @json[:access_token]
+      end
+
     end
 
   end

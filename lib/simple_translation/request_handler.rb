@@ -1,7 +1,7 @@
 require 'faraday'
 
 module SimpleTranslation
-  class TranslationRequest
+  class RequestHandler
     
     def self.post(url, params)
       response = Faraday.post(url, params) 
