@@ -1,3 +1,10 @@
+# NOT DONE
+
+- Create generator for new services
+- Add documentation
+- Should Client class be in charge of credentials?
+- Create bin files in order to execute translations from the CLI
+
 # SimpleTranslation
 
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/simple_translation`. To experiment with that code, run `bin/console` for an interactive prompt.
