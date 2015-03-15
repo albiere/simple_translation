@@ -4,6 +4,9 @@ require 'json'
 module SimpleTranslation
   class BingService
 
+    TRANSLATION_URL = 'http://api.microsofttranslator.com/V2/Http.svc/Translate'
+    CREDENTIAL_URL = 'https://datamarket.accesscontrol.windows.net/v2/OAuth2-13'
+
     def initialize(text_to_be_translated)
       @text_to_be_translated = text_to_be_translated
     end
@@ -18,7 +21,7 @@ module SimpleTranslation
 
     def parse_credential_response(response)
       raise InvalidCredentialError.new unless response.status == 200 
-      JSON.parse(response.body, symbolize_names: true)[:access_token]
+      @token = JSON.parse(response.body, symbolize_names: true)[:access_token]
     end
 
     def parse_translation_response(response)
@@ -33,11 +36,11 @@ module SimpleTranslation
     class << self
       
       def translation_url
-        'http://api.microsofttranslator.com/V2/Http.svc/Translate' 
+        TRANSLATION_URL 
       end
 
       def credential_url
-        'https://datamarket.accesscontrol.windows.net/v2/OAuth2-13'
+        CREDENTIAL_URL
       end
 
     end
@@ -46,11 +49,12 @@ module SimpleTranslation
 
     def translation_hash(text, from, to)
       {
-        :appId => '',
-        :from => from,
-        :to => to,
-        :text => text,
-        :contentType => 'text/plain'
+        appId: '',
+        from: from,
+        to: to,
+        text: text,
+        contentType: 'text/plain',
+        authentication: @token
       }
     end
 

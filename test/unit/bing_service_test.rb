@@ -21,7 +21,8 @@ class BingServiceTest < Minitest::Test
       to: 'pt',
       text: 'This is a ball',
       appId: '',
-      contentType: 'text/plain'
+      contentType: 'text/plain',
+      authentication: nil
     }
 
     hash = @translator.service.build_translate_hash('en', 'pt') 
