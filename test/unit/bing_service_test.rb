@@ -5,7 +5,7 @@ class BingServiceTest < Minitest::Test
 
   def setup
     @credential_response = load_fixture('credential_response.json')
-    @translation_response = load_fixture('translate_response.xml')
+    @translation_response = load_fixture('bing_response_pt_en.xml')
 
     SimpleTranslation.config do |config|
       config.service = :bing
@@ -24,7 +24,7 @@ class BingServiceTest < Minitest::Test
       contentType: 'text/plain'
     }
 
-    hash = @translator.service.build_translate_hash(from: 'en', to: 'pt') 
+    hash = @translator.service.build_translate_hash('en', 'pt') 
     assert_equal expected_hash, hash
   end
 

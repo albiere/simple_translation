@@ -8,7 +8,7 @@ module SimpleTranslation
       @text_to_be_translated = text_to_be_translated
     end
     
-    def build_translate_hash(from: nil, to: nil)
+    def build_translate_hash(from, to)
       translation_hash(@text_to_be_translated, from, to)
     end
 

@@ -4,7 +4,7 @@ require 'simple_translation'
 require 'minitest/autorun'
 require 'mocha/mini_test'
 require 'minitest/reporters'
-require 'faraday'
+require 'webmock/minitest'
 
 Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 
@@ -13,6 +13,15 @@ module Helpers
 
     def load_fixture(path)
       File.read(File.join(File.dirname(__FILE__), 'fixtures', path))
+    end
+
+  end
+
+  module FakeRequest
+
+    def fake_request(url, response)
+      stub_request(:post, url)
+                  .to_return(body: response, status: 200, headers: {}) 
     end
 
   end
